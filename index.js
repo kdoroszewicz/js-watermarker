@@ -11,35 +11,31 @@ let maxFontSize = (imgWidth, imgHeight, ctx) => {
   return `${initialSize}px Helvetica`;
 };
 
-let saveImg = canvas => {
-  downloadLink = document.getElementById("download-img");
-  downloadLink.href = URL.createObjectURL(dataURItoBlob(canvas.toDataURL("image/jpeg, 85")));
-  downloadLink.click();
+let saveImg = (canvas, filename) => {
+  let dlButton = document.createElement("a");
+  let dlDiv = document.getElementById("imgs-download");  
+  dlButton.download = filename;
+  dlButton.text = "Pobierz";
+  dlButton.href = URL.createObjectURL(
+    dataURItoBlob(canvas.toDataURL(`image/${filename.split(".")[-1]}`, 85))
+  );
+  dlDiv.appendChild(dlButton);
+  dlButton.click();
 };
 
-function dataURItoBlob(dataURI) {
-  // convert base64 to raw binary data held in a string
-  var byteString = atob(dataURI.split(",")[1]);
-
-  // separate out the mime component
-  var mimeString = dataURI
-    .split(",")[0]
-    .split(":")[1]
-    .split(";")[0];
-
-  // write the bytes of the string to an ArrayBuffer
-  var arrayBuffer = new ArrayBuffer(byteString.length);
-  var _ia = new Uint8Array(arrayBuffer);
-  for (var i = 0; i < byteString.length; i++) {
-    _ia[i] = byteString.charCodeAt(i);
-  }
-
-  var dataView = new DataView(arrayBuffer);
-  var blob = new Blob([dataView], { type: mimeString });
-  return blob;
+function dataURItoBlob(dataurl) {
+  var arr = dataurl.split(","),
+    mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]),
+    n = bstr.length,
+    u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }  
+  return new Blob([u8arr], { type: mime });
 }
 
-function addWatermark(droppedImg) {
+function addWatermark(droppedImg, filename) {  
   const canvas = document.getElementsByTagName("canvas")[0];
   canvas.width = 480;
   canvas.height = 240;
@@ -62,7 +58,7 @@ function addWatermark(droppedImg) {
     ctx.fillText("znak_wodny", 0, 0);
     ctx.strokeText("znak_wodny", 0, 0);
     ctx.restore();
-    saveImg(canvas);
+    saveImg(canvas, filename);
   };
   img.src = droppedImg;
 }
@@ -73,15 +69,15 @@ function handleDrop(e) {
   e.preventDefault();
   dropZone.style.visibility = "hidden";
 
-  let file = e.dataTransfer.files[0];
-
-  let reader = new FileReader();
-
-  reader.onload = e => {
-    addWatermark(e.target.result);
-  };
-
-  reader.readAsDataURL(file);
+  let files = e.dataTransfer.files;
+  for (let img of files) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      console.log(img);
+      addWatermark(e.target.result, img.name);
+    };
+    reader.readAsDataURL(img);
+  }
 }
 
 function allowDrag(e) {
