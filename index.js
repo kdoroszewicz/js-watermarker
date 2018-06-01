@@ -1,9 +1,18 @@
+const watermarkTextInput = document.getElementById("watermark-text");
+if (watermarkTextInput.value == "") {
+  watermarkTextInput.value = localStorage.getItem("watermarkText");
+}
+
+watermarkTextInput.addEventListener("blur", function (e) {
+  localStorage.setItem("watermarkText", e.target.value);
+});
+
 let maxFontSize = (imgWidth, imgHeight, ctx) => {
   shortSide = Math.min(imgWidth, imgHeight);
   let initialSize = 1;
   ctx.font = `${initialSize}px Helvetica`;
 
-  while (ctx.measureText("znak_wodny").width < shortSide) {
+  while (ctx.measureText(watermarkTextInput.value).width < shortSide) {
     initialSize++;
     ctx.font = `${initialSize}px Helvetica`;
   }
@@ -55,8 +64,8 @@ function addWatermark(droppedImg, filename) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(Math.PI / 4);
     ctx.textAlign = "center";
-    ctx.fillText("znak_wodny", 0, 0);
-    ctx.strokeText("znak_wodny", 0, 0);
+    ctx.fillText(watermarkTextInput.value, 0, 0);
+    ctx.strokeText(watermarkTextInput.value, 0, 0);
     ctx.restore();
     saveImg(canvas, filename);
   };
